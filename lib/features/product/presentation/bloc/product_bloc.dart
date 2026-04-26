@@ -20,6 +20,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
         _deleteProduct = deleteProduct,
         super(const ProductState()) {
     on<ProductsLoaded>(_onProductsLoaded);
+    on<ProductStateReset>(_onProductStateReset);
     on<ProductAdded>(_onProductAdded);
     on<ProductUpdated>(_onProductUpdated);
     on<ProductDeleted>(_onProductDeleted);
@@ -55,6 +56,10 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
 
   Future<void> _onProductsLoaded(ProductsLoaded event, Emitter<ProductState> emit) async {
     await _reloadProducts(emit, showLoading: true);
+  }
+
+  void _onProductStateReset(ProductStateReset event, Emitter<ProductState> emit) {
+    emit(const ProductState());
   }
 
   Future<void> _onProductAdded(ProductAdded event, Emitter<ProductState> emit) async {

@@ -110,6 +110,7 @@ Minimal convention used in this project:
 - Product update/delete now check affected row count and fail when no row is changed, avoiding false-success mutation flows.
 - Auth page controllers are now explicitly disposed to keep StatefulWidget lifecycle practices correct for beginners and production habits.
 - Product list page now renders clear loading/failure UI from `ProductStatus`, so BLoC state meanings stay visible in the UI layer.
+- Sign-out now resets `ProductBloc` state before clearing auth session, so user-scoped list data cannot leak across account switches in-memory.
 - Validation and generic operation-failure labels are now localized in both auth and product forms to keep beginner flow simple and language behavior consistent.
 
 Stable code convention (recommended):

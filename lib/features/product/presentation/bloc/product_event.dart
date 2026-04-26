@@ -8,6 +8,7 @@ sealed class ProductEvent extends Equatable {
 }
 
 class ProductsLoaded extends ProductEvent {}
+class ProductStateReset extends ProductEvent {}
 
 class ProductAdded extends ProductEvent {
   const ProductAdded({

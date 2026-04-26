@@ -49,7 +49,10 @@ class InventoryApp extends StatelessWidget {
             builder: (_, state) {
               if (state.status == AuthStatus.authenticated) {
                 return HomePage(
-                  onSignOut: () => context.read<AuthBloc>().add(AuthSignOutRequested()),
+                  onSignOut: () {
+                    context.read<ProductBloc>().add(ProductStateReset());
+                    context.read<AuthBloc>().add(AuthSignOutRequested());
+                  },
                 );
               }
               return const LoginSignupPage();
