@@ -9,7 +9,16 @@ void main(List<String> args) {
   /// Slightly inset so pyramid / wide marks survive circular Android 12 splash crop.
   const fillFraction = 0.80;
 
-  final inputPath = args.isNotEmpty ? args[0] : 'assets/branding/_logo_source.png';
+  if (args.isEmpty) {
+    stderr.writeln(
+      'Usage: dart run tool/normalize_brand_logo.dart <input.png> [output.png]\n'
+      'Example: dart run tool/normalize_brand_logo.dart ~/Downloads/mark.png assets/branding/app_logo.png',
+    );
+    exitCode = 1;
+    return;
+  }
+
+  final inputPath = args[0];
   final outputPath = args.length > 1 ? args[1] : 'assets/branding/app_logo.png';
 
   final bg = img.ColorRgb8(10, 10, 10);

@@ -60,7 +60,7 @@ The mark is **three isometric boxes in a 2+1 pyramid** (two on the bottom, one c
 
 After replacing that file, regenerate platform assets:
 
-- `dart run tool/normalize_brand_logo.dart assets/branding/_logo_source.png assets/branding/app_logo.png` (square, uniform scale, `#0A0A0A` fill — avoids stretched or off-aspect launcher/splash)
+- `dart run tool/normalize_brand_logo.dart <your_source.png> assets/branding/app_logo.png` (square, uniform scale, `#0A0A0A` fill — avoids stretched or off-aspect launcher/splash)
 - `dart run flutter_launcher_icons`
 - `dart run flutter_native_splash:create`
 
