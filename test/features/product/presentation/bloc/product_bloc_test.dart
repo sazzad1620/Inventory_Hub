@@ -18,10 +18,21 @@ class _FakeGetProductsUseCase extends GetProductsUseCase {
         buyingPrice: 140,
         sellingPrice: 160,
         stock: 3,
+        unit: 'Liter',
+        categoryName: 'Grocery',
         createdAt: DateTime(2026, 1, 1),
         updatedAt: DateTime(2026, 1, 3),
       ),
     ]);
+  }
+}
+
+class _FakeGetCategoriesUseCase extends GetCategoriesUseCase {
+  _FakeGetCategoriesUseCase() : super(_NoopProductRepo());
+
+  @override
+  Future<Result<List<String>>> call() async {
+    return const Success(['Grocery', 'Electronics']);
   }
 }
 
@@ -42,6 +53,8 @@ class _FakeAddUseCase extends AddProductUseCase {
     required double buyingPrice,
     required double sellingPrice,
     required int stock,
+    required String unit,
+    String? categoryName,
   }) async {
     return const Success(null);
   }
@@ -56,6 +69,8 @@ class _FakeUpdateUseCase extends UpdateProductUseCase {
     required double buyingPrice,
     required double sellingPrice,
     required int stock,
+    required String unit,
+    String? categoryName,
   }) async {
     return const Success(null);
   }
@@ -76,6 +91,8 @@ class _NoopProductRepo implements ProductRepository {
     required double buyingPrice,
     required double sellingPrice,
     required int stock,
+    required String unit,
+    String? categoryName,
   }) async {}
 
   @override
@@ -85,12 +102,17 @@ class _NoopProductRepo implements ProductRepository {
   Future<List<ProductItem>> listProducts() async => [];
 
   @override
+  Future<List<String>> listCategories() async => [];
+
+  @override
   Future<void> updateProduct({
     required int id,
     required String name,
     required double buyingPrice,
     required double sellingPrice,
     required int stock,
+    required String unit,
+    String? categoryName,
   }) async {}
 }
 
@@ -99,6 +121,7 @@ void main() {
     'emits loading then loaded when products are requested',
     build: () => ProductBloc(
       getProducts: _FakeGetProductsUseCase(),
+      getCategories: _FakeGetCategoriesUseCase(),
       addProduct: _FakeAddUseCase(),
       updateProduct: _FakeUpdateUseCase(),
       deleteProduct: _FakeDeleteUseCase(),
@@ -108,7 +131,8 @@ void main() {
       const ProductState(status: ProductStatus.loading),
       isA<ProductState>()
           .having((s) => s.status, 'status', ProductStatus.loaded)
-          .having((s) => s.products.length, 'products length', 1),
+          .having((s) => s.products.length, 'products length', 1)
+          .having((s) => s.categories.length, 'categories length', 2),
     ],
   );
 
@@ -116,6 +140,7 @@ void main() {
     'emits loading then failure when product loading fails',
     build: () => ProductBloc(
       getProducts: _FailingGetProductsUseCase(),
+      getCategories: _FakeGetCategoriesUseCase(),
       addProduct: _FakeAddUseCase(),
       updateProduct: _FakeUpdateUseCase(),
       deleteProduct: _FakeDeleteUseCase(),

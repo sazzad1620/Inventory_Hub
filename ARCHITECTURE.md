@@ -80,6 +80,8 @@ To keep the project beginner-friendly but industry-safe, this app now keeps only
 - `schemaVersion` is versioned and includes a real migration strategy.
 - `Session.userId` has a foreign-key relation to `Users.id` with safe delete behavior.
 - `Products.userId` scopes product records to the currently signed-in user.
+- `Categories` table is user-scoped and products can optionally reference a category.
+- `Products.unit` stores stock unit labels with a safe default (`Unit`) for beginner-friendly forms.
 - Multi-step auth signup write (create user + create session) is atomic through one transaction.
 - Product prices are stored as integer cents in DB to avoid floating-point money issues.
 
@@ -108,6 +110,9 @@ Minimal convention used in this project:
 - Product mutations now refresh list state directly inside the same BLoC flow (no extra re-dispatch event cycle), which keeps behavior clear for learning and cleaner for scale.
 - Product mutation failures now set explicit `failure` status, and successful reload clears old errors for consistent UI behavior.
 - Product update/delete now check affected row count and fail when no row is changed, avoiding false-success mutation flows.
+- Product form now supports optional categories with reusable dropdown selections from stored categories.
+- Product form now supports unit selection beside stock, defaulting to `Unit` for low-friction data entry.
+- Product list supports category-aware search and quick category filters for faster item discovery.
 - Auth page controllers are now explicitly disposed to keep StatefulWidget lifecycle practices correct for beginners and production habits.
 - Product list page now renders clear loading/failure UI from `ProductStatus`, so BLoC state meanings stay visible in the UI layer.
 - Sign-out now resets `ProductBloc` state before clearing auth session, so user-scoped list data cannot leak across account switches in-memory.
@@ -178,6 +183,7 @@ Minimum target before expanding features:
 Learning-grade in this app (good and intentional):
 
 - Small feature scope (auth + product CRUD) to focus on architecture discipline.
+- Product inventory now includes optional category and unit metadata while keeping the same clean-layer boundaries.
 - Simple `Result<T>` error handling and stable error codes.
 - Local-only data flow through Drift with clear datasource boundaries.
 

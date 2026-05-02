@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/l10n/app_strings.dart';
 import '../../../../core/l10n/language_cubit.dart';
+import '../../../../core/widgets/language_switcher.dart';
 import '../../domain/entities/product_item.dart';
 import '../bloc/product_bloc.dart';
 import 'product_form_page.dart';
@@ -22,6 +23,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String _query = '';
+  String? _selectedCategory;
 
   @override
   void initState() {
@@ -62,10 +64,8 @@ class _HomePageState extends State<HomePage> {
                                 style: const TextStyle(fontSize: 30, color: Colors.white),
                               ),
                             ),
-                            IconButton(
-                              onPressed: () => context.read<LanguageCubit>().toggleLanguage(),
-                              icon: const Icon(Icons.language, color: Color(0xFF9CA3AF)),
-                            ),
+                            const LanguageSwitcher(compact: true),
+                            const SizedBox(width: 6),
                             IconButton(
                               onPressed: widget.onSignOut,
                               icon: const Icon(Icons.logout, color: Color(0xFF9CA3AF)),
@@ -73,14 +73,79 @@ class _HomePageState extends State<HomePage> {
                           ],
                         ),
                         const SizedBox(height: 8),
-                        TextField(
-                          onChanged: (v) => setState(() => _query = v),
-                          style: const TextStyle(color: Colors.white),
-                          decoration: InputDecoration(
-                            prefixIcon: const Icon(Icons.search, color: Color(0xFF6B7280)),
-                            hintText: t['search'],
-                            hintStyle: const TextStyle(color: Color(0xFF6B7280)),
+                        SizedBox(
+                          height: 48,
+                          child: TextField(
+                            onChanged: (v) => setState(() => _query = v),
+                            style: const TextStyle(color: Colors.white, height: 1.1),
+                            decoration: InputDecoration(
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                              prefixIcon: const Icon(Icons.search, color: Color(0xFF6B7280)),
+                              hintText: t['searchByNameCategoryId'] ?? t['search'],
+                              hintStyle: const TextStyle(color: Color(0xFF6B7280), height: 1.1),
+                            ),
                           ),
+                        ),
+                        const SizedBox(height: 14),
+                        BlocBuilder<ProductBloc, ProductState>(
+                          buildWhen: (prev, curr) => prev.categories != curr.categories,
+                          builder: (_, state) {
+                            final categories = state.categories;
+                            if (categories.isEmpty) return const SizedBox.shrink();
+                            return SizedBox(
+                              height: 32,
+                              child: ListView(
+                                scrollDirection: Axis.horizontal,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 8),
+                                    child: SizedBox(
+                                      height: 30,
+                                      child: ChoiceChip(
+                                        label: Text(t['allCategories']!, maxLines: 1, overflow: TextOverflow.ellipsis),
+                                        selected: _selectedCategory == null,
+                                        onSelected: (_) => setState(() => _selectedCategory = null),
+                                        selectedColor: const Color(0xFF10B981),
+                                        backgroundColor: const Color(0xFF1A1A1A),
+                                        visualDensity: VisualDensity.compact,
+                                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                        labelPadding: const EdgeInsets.symmetric(horizontal: 8),
+                                        labelStyle: TextStyle(
+                                          color: _selectedCategory == null ? Colors.white : const Color(0xFF9CA3AF),
+                                          height: 1.0,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  ...categories.map(
+                                    (category) => Padding(
+                                      padding: const EdgeInsets.only(right: 8),
+                                      child: SizedBox(
+                                        height: 30,
+                                        child: ChoiceChip(
+                                          label: Text(category, maxLines: 1, overflow: TextOverflow.ellipsis),
+                                          selected: _selectedCategory == category,
+                                          onSelected: (_) => setState(() => _selectedCategory = category),
+                                          selectedColor: const Color(0xFF10B981),
+                                          backgroundColor: const Color(0xFF1A1A1A),
+                                          visualDensity: VisualDensity.compact,
+                                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                          labelPadding: const EdgeInsets.symmetric(horizontal: 8),
+                                          labelStyle: TextStyle(
+                                            color: _selectedCategory == category
+                                                ? Colors.white
+                                                : const Color(0xFF9CA3AF),
+                                            height: 1.0,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -103,7 +168,11 @@ class _HomePageState extends State<HomePage> {
 
                         final list = state.products.where((p) {
                           final q = _query.toLowerCase();
-                          return p.name.toLowerCase().contains(q) || p.id.toString().contains(q);
+                          final matchesQuery = p.name.toLowerCase().contains(q) ||
+                              p.id.toString().contains(q) ||
+                              (p.categoryName?.toLowerCase().contains(q) ?? false);
+                          final matchesCategory = _selectedCategory == null || p.categoryName == _selectedCategory;
+                          return matchesQuery && matchesCategory;
                         }).toList();
                         if (list.isEmpty) {
                           return Center(child: Text(t['noProducts']!, style: const TextStyle(color: Color(0xFF9CA3AF))));
@@ -120,9 +189,9 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-          floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-          floatingActionButton: SizedBox(
-            width: MediaQuery.of(context).size.width - 28,
+          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+          floatingActionButton: Padding(
+            padding: const EdgeInsets.only(right: 4),
             child: FloatingActionButton.extended(
               onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProductFormPage())),
               label: Text(t['addProduct']!),
@@ -147,6 +216,7 @@ class _ProductTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final code = context.watch<LanguageCubit>().state.languageCode;
+    final isBn = code == 'bn';
     final locale = code == 'bn' ? 'bn_BD' : 'en_US';
     final formatter = DateFormat('MMM d', locale);
     final updatedText = formatter.format(product.updatedAt);
@@ -163,6 +233,10 @@ class _ProductTile extends StatelessWidget {
           ),
           child: Container(
             padding: const EdgeInsets.all(14),
+            constraints: const BoxConstraints(
+              minHeight: 120,
+              maxHeight: 120,
+            ),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14),
               gradient: const LinearGradient(
@@ -241,7 +315,9 @@ class _ProductTile extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  '৳${product.sellingPrice.toStringAsFixed(2)}',
+                                  '${product.categoryName ?? t['noCategory']!} • ৳${product.sellingPrice.toStringAsFixed(2)}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
                                     color: Color(0xFF34D399),
                                     fontSize: 14,
@@ -263,7 +339,7 @@ class _ProductTile extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          t['units']!,
+                          _unitLabel(product.unit, isBn),
                           style: const TextStyle(color: Color(0xFF6B7280), fontSize: 12),
                         ),
                       ],
@@ -285,6 +361,8 @@ class _ProductTile extends StatelessWidget {
                     const Spacer(),
                     Text(
                       '${t['updated']}: $updatedText',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(color: Color(0xFF6B7280), fontSize: 12),
                     ),
                   ],
@@ -295,5 +373,23 @@ class _ProductTile extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _unitLabel(String unit, bool isBn) {
+    if (!isBn) return unit;
+    switch (unit) {
+      case 'KG':
+        return 'কেজি';
+      case 'Liter':
+        return 'লিটার';
+      case 'Pack':
+        return 'প্যাকেট';
+      case 'Dozen':
+        return 'ডজন';
+      case 'Piece':
+        return 'পিস';
+      default:
+        return 'ইউনিট';
+    }
   }
 }

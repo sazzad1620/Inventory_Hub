@@ -11,6 +11,8 @@ class _FakeProductRepository implements ProductRepository {
     required double buyingPrice,
     required double sellingPrice,
     required int stock,
+    required String unit,
+    String? categoryName,
   }) async {}
 
   @override
@@ -25,11 +27,16 @@ class _FakeProductRepository implements ProductRepository {
         buyingPrice: 100,
         sellingPrice: 120,
         stock: 5,
+        unit: 'KG',
+        categoryName: 'Grocery',
         createdAt: DateTime(2026, 1, 1),
         updatedAt: DateTime(2026, 1, 2),
       ),
     ];
   }
+
+  @override
+  Future<List<String>> listCategories() async => ['Grocery'];
 
   @override
   Future<void> updateProduct({
@@ -38,6 +45,8 @@ class _FakeProductRepository implements ProductRepository {
     required double buyingPrice,
     required double sellingPrice,
     required int stock,
+    required String unit,
+    String? categoryName,
   }) async {}
 }
 

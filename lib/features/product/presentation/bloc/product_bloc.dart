@@ -11,10 +11,12 @@ part 'product_state.dart';
 class ProductBloc extends Bloc<ProductEvent, ProductState> {
   ProductBloc({
     required GetProductsUseCase getProducts,
+    required GetCategoriesUseCase getCategories,
     required AddProductUseCase addProduct,
     required UpdateProductUseCase updateProduct,
     required DeleteProductUseCase deleteProduct,
   })  : _getProducts = getProducts,
+        _getCategories = getCategories,
         _addProduct = addProduct,
         _updateProduct = updateProduct,
         _deleteProduct = deleteProduct,
@@ -27,6 +29,7 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
   }
 
   final GetProductsUseCase _getProducts;
+  final GetCategoriesUseCase _getCategories;
   final AddProductUseCase _addProduct;
   final UpdateProductUseCase _updateProduct;
   final DeleteProductUseCase _deleteProduct;
@@ -44,11 +47,17 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
       emit(state.copyWith(status: ProductStatus.failure, error: result.code ?? 'products_load_failed'));
       return;
     }
+    final categoryResult = await _getCategories();
+    if (categoryResult is FailureResult<List<String>>) {
+      emit(state.copyWith(status: ProductStatus.failure, error: categoryResult.code ?? 'categories_load_failed'));
+      return;
+    }
 
     emit(
       state.copyWith(
         status: ProductStatus.loaded,
         products: (result as Success<List<ProductItem>>).data,
+        categories: (categoryResult as Success<List<String>>).data,
         clearError: true,
       ),
     );
@@ -68,6 +77,8 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
       buyingPrice: event.buyingPrice,
       sellingPrice: event.sellingPrice,
       stock: event.stock,
+      unit: event.unit,
+      categoryName: event.categoryName,
     );
     if (result is FailureResult<void>) {
       emit(state.copyWith(status: ProductStatus.failure, error: result.code ?? 'product_add_failed'));
@@ -83,6 +94,8 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
       buyingPrice: event.buyingPrice,
       sellingPrice: event.sellingPrice,
       stock: event.stock,
+      unit: event.unit,
+      categoryName: event.categoryName,
     );
     if (result is FailureResult<void>) {
       emit(state.copyWith(status: ProductStatus.failure, error: result.code ?? 'product_update_failed'));

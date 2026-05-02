@@ -7,4 +7,10 @@ class LanguageCubit extends Cubit<Locale> {
   void toggleLanguage() {
     emit(state.languageCode == 'en' ? const Locale('bn') : const Locale('en'));
   }
+
+  void setLanguage(String languageCode) {
+    if (languageCode == state.languageCode) return;
+    if (languageCode != 'en' && languageCode != 'bn') return;
+    emit(Locale(languageCode));
+  }
 }

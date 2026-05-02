@@ -16,15 +16,19 @@ class ProductAdded extends ProductEvent {
     required this.buyingPrice,
     required this.sellingPrice,
     required this.stock,
+    required this.unit,
+    this.categoryName,
   });
 
   final String name;
   final double buyingPrice;
   final double sellingPrice;
   final int stock;
+  final String unit;
+  final String? categoryName;
 
   @override
-  List<Object?> get props => [name, buyingPrice, sellingPrice, stock];
+  List<Object?> get props => [name, buyingPrice, sellingPrice, stock, unit, categoryName];
 }
 
 class ProductUpdated extends ProductEvent {
@@ -34,6 +38,8 @@ class ProductUpdated extends ProductEvent {
     required this.buyingPrice,
     required this.sellingPrice,
     required this.stock,
+    required this.unit,
+    this.categoryName,
   });
 
   final int id;
@@ -41,9 +47,11 @@ class ProductUpdated extends ProductEvent {
   final double buyingPrice;
   final double sellingPrice;
   final int stock;
+  final String unit;
+  final String? categoryName;
 
   @override
-  List<Object?> get props => [id, name, buyingPrice, sellingPrice, stock];
+  List<Object?> get props => [id, name, buyingPrice, sellingPrice, stock, unit, categoryName];
 }
 
 class ProductDeleted extends ProductEvent {

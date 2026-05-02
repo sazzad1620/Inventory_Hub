@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/l10n/app_strings.dart';
 import '../../../../core/l10n/language_cubit.dart';
+import '../../../../core/widgets/app_logo.dart';
+import '../../../../core/widgets/language_switcher.dart';
 import '../bloc/auth_bloc.dart';
 
 class LoginSignupPage extends StatefulWidget {
@@ -55,25 +57,7 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF10B981).withValues(alpha: 0.10),
-                                borderRadius: BorderRadius.circular(18),
-                              ),
-                              child: Container(
-                                width: 50,
-                                height: 50,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(14),
-                                  gradient: const LinearGradient(
-                                    colors: [Color(0xFF10B981), Color(0xFF059669)],
-                                  ),
-                                ),
-                                alignment: Alignment.center,
-                                child: const Text('🏪', style: TextStyle(fontSize: 24)),
-                              ),
-                            ),
+                            const AppLogo(size: 96, borderRadius: 10),
                             const SizedBox(height: 12),
                             Text(t['appTitle']!, style: const TextStyle(fontSize: 32, color: Colors.white)),
                             const SizedBox(height: 6),
@@ -137,30 +121,7 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
                               onPressed: () => setState(() => _isSignUp = !_isSignUp),
                               child: Text(_isSignUp ? t['switchToSignIn']! : t['switchToSignUp']!),
                             ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                _LangButton(
-                                  label: 'English',
-                                  selected: locale.languageCode == 'en',
-                                  onTap: () {
-                                    if (locale.languageCode != 'en') {
-                                      context.read<LanguageCubit>().toggleLanguage();
-                                    }
-                                  },
-                                ),
-                                const SizedBox(width: 8),
-                                _LangButton(
-                                  label: 'বাংলা',
-                                  selected: locale.languageCode == 'bn',
-                                  onTap: () {
-                                    if (locale.languageCode != 'bn') {
-                                      context.read<LanguageCubit>().toggleLanguage();
-                                    }
-                                  },
-                                ),
-                              ],
-                            ),
+                            const LanguageSwitcher(),
                             const SizedBox(height: 10),
                             BlocBuilder<AuthBloc, AuthState>(
                               builder: (_, state) {
@@ -195,29 +156,5 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
     } else {
       context.read<AuthBloc>().add(AuthSignInRequested(email: _email.text.trim(), password: _password.text.trim()));
     }
-  }
-}
-
-class _LangButton extends StatelessWidget {
-  const _LangButton({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return TextButton(
-      onPressed: onTap,
-      style: TextButton.styleFrom(
-        foregroundColor: selected ? const Color(0xFF34D399) : const Color(0xFF9CA3AF),
-        backgroundColor: selected ? const Color(0xFF10B981).withValues(alpha: 0.20) : Colors.transparent,
-      ),
-      child: Text(label),
-    );
   }
 }

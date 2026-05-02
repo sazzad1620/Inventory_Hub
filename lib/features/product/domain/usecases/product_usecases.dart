@@ -27,6 +27,8 @@ class AddProductUseCase {
     required double buyingPrice,
     required double sellingPrice,
     required int stock,
+    required String unit,
+    String? categoryName,
   }) async {
     try {
       await _repo.addProduct(
@@ -34,6 +36,8 @@ class AddProductUseCase {
         buyingPrice: buyingPrice,
         sellingPrice: sellingPrice,
         stock: stock,
+        unit: unit,
+        categoryName: categoryName,
       );
       return const Success(null);
     } catch (e) {
@@ -55,6 +59,8 @@ class UpdateProductUseCase {
     required double buyingPrice,
     required double sellingPrice,
     required int stock,
+    required String unit,
+    String? categoryName,
   }) async {
     try {
       await _repo.updateProduct(
@@ -63,6 +69,8 @@ class UpdateProductUseCase {
         buyingPrice: buyingPrice,
         sellingPrice: sellingPrice,
         stock: stock,
+        unit: unit,
+        categoryName: categoryName,
       );
       return const Success(null);
     } catch (e) {
@@ -86,6 +94,22 @@ class DeleteProductUseCase {
       return FailureResult(
         'Failed to delete product',
         code: 'product_delete_failed',
+      );
+    }
+  }
+}
+
+class GetCategoriesUseCase {
+  GetCategoriesUseCase(this._repo);
+  final ProductRepository _repo;
+
+  Future<Result<List<String>>> call() async {
+    try {
+      return Success(await _repo.listCategories());
+    } catch (e) {
+      return FailureResult(
+        'Failed to load categories',
+        code: 'categories_load_failed',
       );
     }
   }

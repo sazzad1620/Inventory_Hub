@@ -14,12 +14,16 @@ class ProductRepositoryImpl implements ProductRepository {
     required double buyingPrice,
     required double sellingPrice,
     required int stock,
+    required String unit,
+    String? categoryName,
   }) async {
     await _local.insertProduct(
       name: name,
       buyingPrice: buyingPrice,
       sellingPrice: sellingPrice,
       stock: stock,
+      unit: unit,
+      categoryName: categoryName,
     );
   }
 
@@ -33,17 +37,24 @@ class ProductRepositoryImpl implements ProductRepository {
     final items = await _local.getProducts();
     return items
         .map(
-          (p) => ProductItem(
-            id: p.id,
-            name: p.name,
-            buyingPrice: p.buyingPrice / _centsMultiplier,
-            sellingPrice: p.sellingPrice / _centsMultiplier,
-            stock: p.stock,
-            createdAt: p.createdAt,
-            updatedAt: p.updatedAt,
+          (record) => ProductItem(
+            id: record.product.id,
+            name: record.product.name,
+            buyingPrice: record.product.buyingPrice / _centsMultiplier,
+            sellingPrice: record.product.sellingPrice / _centsMultiplier,
+            stock: record.product.stock,
+            unit: record.product.unit,
+            categoryName: record.categoryName,
+            createdAt: record.product.createdAt,
+            updatedAt: record.product.updatedAt,
           ),
         )
         .toList();
+  }
+
+  @override
+  Future<List<String>> listCategories() {
+    return _local.getCategories();
   }
 
   @override
@@ -53,6 +64,8 @@ class ProductRepositoryImpl implements ProductRepository {
     required double buyingPrice,
     required double sellingPrice,
     required int stock,
+    required String unit,
+    String? categoryName,
   }) {
     return _local.updateProduct(
       id: id,
@@ -60,6 +73,8 @@ class ProductRepositoryImpl implements ProductRepository {
       buyingPrice: buyingPrice,
       sellingPrice: sellingPrice,
       stock: stock,
+      unit: unit,
+      categoryName: categoryName,
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
@@ -17,14 +18,38 @@ class ProductFormPage extends StatefulWidget {
 }
 
 class _ProductFormPageState extends State<ProductFormPage> {
+  static const String _newCategoryValue = '__new_category__';
+  static const List<String> _unitOptions = ['Unit', 'KG', 'Liter', 'Pack', 'Dozen', 'Piece'];
+
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _name;
   late final TextEditingController _buying;
   late final TextEditingController _selling;
   late final TextEditingController _stock;
+  late final TextEditingController _newCategory;
+  late String _selectedUnit;
+  String? _selectedCategory;
   bool _awaitingActionResult = false;
 
   bool get _isEdit => widget.product != null;
+
+  String _unitLabel(String unit, bool isBn) {
+    if (!isBn) return unit;
+    switch (unit) {
+      case 'KG':
+        return 'কেজি';
+      case 'Liter':
+        return 'লিটার';
+      case 'Pack':
+        return 'প্যাকেট';
+      case 'Dozen':
+        return 'ডজন';
+      case 'Piece':
+        return 'পিস';
+      default:
+        return 'ইউনিট';
+    }
+  }
 
   @override
   void initState() {
@@ -34,6 +59,9 @@ class _ProductFormPageState extends State<ProductFormPage> {
     _buying = TextEditingController(text: p?.buyingPrice.toStringAsFixed(2) ?? '');
     _selling = TextEditingController(text: p?.sellingPrice.toStringAsFixed(2) ?? '');
     _stock = TextEditingController(text: p?.stock.toString() ?? '');
+    _newCategory = TextEditingController();
+    _selectedUnit = p?.unit.isNotEmpty == true ? p!.unit : 'Unit';
+    _selectedCategory = p?.categoryName;
   }
 
   @override
@@ -42,6 +70,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
     _buying.dispose();
     _selling.dispose();
     _stock.dispose();
+    _newCategory.dispose();
     super.dispose();
   }
 
@@ -51,6 +80,15 @@ class _ProductFormPageState extends State<ProductFormPage> {
       builder: (_, locale) {
         final t = AppStrings.values[locale.languageCode]!;
         final isBn = locale.languageCode == 'bn';
+        final state = context.watch<ProductBloc>().state;
+        final existingCategories = [...state.categories];
+        final editCategory = widget.product?.categoryName;
+        if (editCategory != null &&
+            editCategory.isNotEmpty &&
+            !existingCategories.contains(editCategory)) {
+          existingCategories.add(editCategory);
+          existingCategories.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+        }
         return BlocListener<ProductBloc, ProductState>(
           listenWhen: (_, current) => _awaitingActionResult,
           listener: (context, state) {
@@ -141,10 +179,57 @@ class _ProductFormPageState extends State<ProductFormPage> {
                             controller: _name,
                             style: const TextStyle(color: Colors.white),
                             decoration: InputDecoration(
-                              hintText: isBn ? 'যেমন, বাসমতি চাল ১ কেজি' : 'e.g., Basmati Rice 1kg',
+                              hintText: isBn ? 'যেমন, বাসমতি চাল' : 'e.g., Basmati Rice',
                             ),
                             validator: (v) => (v == null || v.isEmpty) ? t['requiredField'] : null,
                           ),
+                          const SizedBox(height: 12),
+                          _FieldLabel(text: '${t['category']} (${t['optional']})'),
+                          DropdownButtonFormField<String>(
+                            initialValue: _selectedCategory == _newCategoryValue ? _newCategoryValue : _selectedCategory,
+                            items: [
+                              DropdownMenuItem<String>(
+                                value: null,
+                                child: Text(
+                                  t['noCategory']!,
+                                  style: const TextStyle(color: Color(0xFF9CA3AF)),
+                                ),
+                              ),
+                              ...existingCategories.map(
+                                (c) => DropdownMenuItem<String>(
+                                  value: c,
+                                  child: Text(c),
+                                ),
+                              ),
+                              DropdownMenuItem<String>(
+                                value: _newCategoryValue,
+                                child: Text(isBn ? 'নতুন ক্যাটাগরি...' : 'Add new category...'),
+                              ),
+                            ],
+                            dropdownColor: const Color(0xFF1A1A1A),
+                            style: const TextStyle(color: Colors.white),
+                            iconEnabledColor: const Color(0xFF9CA3AF),
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedCategory = value;
+                                if (value != _newCategoryValue) {
+                                  _newCategory.clear();
+                                }
+                              });
+                            },
+                          ),
+                          if (_selectedCategory == _newCategoryValue) ...[
+                            const SizedBox(height: 10),
+                            TextFormField(
+                              controller: _newCategory,
+                              style: const TextStyle(color: Colors.white),
+                              decoration: InputDecoration(hintText: t['categoryHint']),
+                              validator: (v) {
+                                if (_selectedCategory != _newCategoryValue) return null;
+                                return (v == null || v.trim().isEmpty) ? t['requiredField'] : null;
+                              },
+                            ),
+                          ],
                           const SizedBox(height: 12),
                           Row(
                             children: [
@@ -156,6 +241,9 @@ class _ProductFormPageState extends State<ProductFormPage> {
                                     TextFormField(
                                       controller: _buying,
                                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                                      ],
                                       style: const TextStyle(color: Colors.white),
                                       decoration: const InputDecoration(hintText: '0.00'),
                                       validator: (v) => double.tryParse(v ?? '') == null ? t['invalidValue'] : null,
@@ -172,6 +260,9 @@ class _ProductFormPageState extends State<ProductFormPage> {
                                     TextFormField(
                                       controller: _selling,
                                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                                      ],
                                       style: const TextStyle(color: Colors.white),
                                       decoration: const InputDecoration(hintText: '0.00'),
                                       validator: (v) => double.tryParse(v ?? '') == null ? t['invalidValue'] : null,
@@ -182,13 +273,51 @@ class _ProductFormPageState extends State<ProductFormPage> {
                             ],
                           ),
                           const SizedBox(height: 12),
-                          _FieldLabel(text: _isEdit ? (isBn ? 'বর্তমান স্টক' : 'Current Stock') : (isBn ? 'স্টক লেভেল' : 'Stock Level')),
-                          TextFormField(
-                            controller: _stock,
-                            keyboardType: TextInputType.number,
-                            style: const TextStyle(color: Colors.white),
-                            decoration: const InputDecoration(hintText: '0'),
-                            validator: (v) => int.tryParse(v ?? '') == null ? t['invalidValue'] : null,
+                          Row(
+                            children: [
+                              Expanded(
+                                flex: 3,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _FieldLabel(text: _isEdit ? (isBn ? 'বর্তমান স্টক' : 'Current Stock') : (isBn ? 'স্টক লেভেল' : 'Stock Level')),
+                                    TextFormField(
+                                      controller: _stock,
+                                      keyboardType: TextInputType.number,
+                                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                      style: const TextStyle(color: Colors.white),
+                                      decoration: const InputDecoration(hintText: '0'),
+                                      validator: (v) => int.tryParse(v ?? '') == null ? t['invalidValue'] : null,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                flex: 2,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _FieldLabel(text: t['unit']!),
+                                    DropdownButtonFormField<String>(
+                                      initialValue: _unitOptions.contains(_selectedUnit) ? _selectedUnit : 'Unit',
+                                      items: _unitOptions
+                                          .map(
+                                            (u) => DropdownMenuItem<String>(
+                                              value: u,
+                                              child: Text(_unitLabel(u, isBn)),
+                                            ),
+                                          )
+                                          .toList(),
+                                      dropdownColor: const Color(0xFF1A1A1A),
+                                      style: const TextStyle(color: Colors.white),
+                                      iconEnabledColor: const Color(0xFF9CA3AF),
+                                      onChanged: (value) => setState(() => _selectedUnit = value ?? 'Unit'),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -236,6 +365,8 @@ class _ProductFormPageState extends State<ProductFormPage> {
 
   void _submit() {
     if (_awaitingActionResult || !_formKey.currentState!.validate()) return;
+    final categoryName =
+        _selectedCategory == _newCategoryValue ? _newCategory.text.trim() : _selectedCategory?.trim();
     setState(() => _awaitingActionResult = true);
     if (_isEdit) {
       context.read<ProductBloc>().add(
@@ -245,6 +376,8 @@ class _ProductFormPageState extends State<ProductFormPage> {
               buyingPrice: double.parse(_buying.text),
               sellingPrice: double.parse(_selling.text),
               stock: int.parse(_stock.text),
+              unit: _selectedUnit,
+              categoryName: categoryName?.isEmpty == true ? null : categoryName,
             ),
           );
     } else {
@@ -254,6 +387,8 @@ class _ProductFormPageState extends State<ProductFormPage> {
               buyingPrice: double.parse(_buying.text),
               sellingPrice: double.parse(_selling.text),
               stock: int.parse(_stock.text),
+              unit: _selectedUnit,
+              categoryName: categoryName?.isEmpty == true ? null : categoryName,
             ),
           );
     }

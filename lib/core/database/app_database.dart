@@ -29,21 +29,34 @@ class Products extends Table {
   IntColumn get userId => integer()
       .nullable()
       .references(Users, #id, onDelete: KeyAction.cascade)();
+  IntColumn get categoryId => integer()
+      .nullable()
+      .references(Categories, #id, onDelete: KeyAction.setNull)();
   TextColumn get name => text()();
   IntColumn get buyingPrice => integer()();
   IntColumn get sellingPrice => integer()();
   IntColumn get stock => integer()();
+  TextColumn get unit => text().withDefault(const Constant('Unit'))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 }
 
-@DriftDatabase(tables: [Users, Session, Products])
+class Categories extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get userId => integer()
+      .nullable()
+      .references(Users, #id, onDelete: KeyAction.cascade)();
+  TextColumn get name => text()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+@DriftDatabase(tables: [Users, Session, Products, Categories])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -124,6 +137,40 @@ class AppDatabase extends _$AppDatabase {
                 p.created_at,
                 p.updated_at
               FROM products p;
+            ''');
+            await customStatement('DROP TABLE products;');
+            await customStatement('ALTER TABLE products_new RENAME TO products;');
+          }
+          if (from < 5) {
+            await customStatement('''
+              CREATE TABLE categories (
+                id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NULL REFERENCES users (id) ON DELETE CASCADE,
+                name TEXT NOT NULL,
+                created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+              );
+            ''');
+            await customStatement('''
+              CREATE TABLE products_new (
+                id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NULL REFERENCES users (id) ON DELETE CASCADE,
+                category_id INTEGER NULL REFERENCES categories (id) ON DELETE SET NULL,
+                name TEXT NOT NULL,
+                buying_price INTEGER NOT NULL,
+                selling_price INTEGER NOT NULL,
+                stock INTEGER NOT NULL,
+                unit TEXT NOT NULL DEFAULT 'Unit',
+                created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+                updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+              );
+            ''');
+            await customStatement('''
+              INSERT INTO products_new (
+                id, user_id, name, buying_price, selling_price, stock, unit, created_at, updated_at
+              )
+              SELECT
+                id, user_id, name, buying_price, selling_price, stock, 'Unit', created_at, updated_at
+              FROM products;
             ''');
             await customStatement('DROP TABLE products;');
             await customStatement('ALTER TABLE products_new RENAME TO products;');

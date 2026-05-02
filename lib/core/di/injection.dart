@@ -36,6 +36,7 @@ void configureDependencies() {
   sl.registerLazySingleton(() => SignOutUseCase(sl()));
 
   sl.registerLazySingleton(() => GetProductsUseCase(sl()));
+  sl.registerLazySingleton(() => GetCategoriesUseCase(sl()));
   sl.registerLazySingleton(() => AddProductUseCase(sl()));
   sl.registerLazySingleton(() => UpdateProductUseCase(sl()));
   sl.registerLazySingleton(() => DeleteProductUseCase(sl()));
@@ -52,6 +53,7 @@ void configureDependencies() {
   sl.registerFactory(
     () => ProductBloc(
       getProducts: sl(),
+      getCategories: sl(),
       addProduct: sl(),
       updateProduct: sl(),
       deleteProduct: sl(),
